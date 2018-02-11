@@ -17,6 +17,16 @@ export default StyleSheet.create({
 	height: 30,
 	fontSize: 20,
   },
+  listHeader: {
+	height: 30,
+	fontSize: 20,
+	fontWeight: 'bold',
+  },
+  stationName: {
+	height: 35,
+	fontSize: 25,
+	fontWeight: 'bold',
+  },
   train: {
 	paddingBottom: 5,
   },

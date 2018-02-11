@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppRegistry, StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, Button,} from 'react-native';
+import { AppRegistry, StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, Button, AsyncStorage, FlatList, } from 'react-native';
 import { StackNavigator, } from 'react-navigation';
 import styles from "../style";
 import "../stations.js";
@@ -10,49 +10,78 @@ export default class StationsScreen extends React.Component {
   };
 	constructor(){
 		super();
-		this.state = {stations: [{stationName: "Ladataan asemia...", stationShortCode: "MOI"} ], count: 0, stationArray: [], searchText: ""};
+		this.state = {stations: [{stationName: "Ladataan asemia...", stationShortCode: "MOI", stationUICCode: 100000} ], count: 0, stationArray: [], searchText: ""};
 		this.sortStations = this.sortStations.bind(this)
 	}
 	async getStations(){
 		try{
+			try{
+				var savedStations = await AsyncStorage.getItem('stations');
+				if (savedStations != null){
+					this.setState({stations: JSON.parse(savedStations)});
+					//this.updateStations("mo");
+					this.updateStations(this.state.searchText);
+				}else{
+					savedStations = "";
+				}
+			}catch(error){
+				this.setState({stations: [{stationName: "1" + error.toString(), stationShortCode: "MOI"}]});
+			}	
 			let response = await fetch("https://rata.digitraffic.fi/api/v1/metadata/stations");
 			let responseJson = await response.json();
-			this.setState({stations: responseJson});
-			this.state.stations.sort(this.sortStations);
-			this.updateStations(this.state.searchText);
-		} catch(error){
-			this.setState({stations: [{stationName: "Ladataan asemia....", stationShortCode: "MOI"}]});
-		}
+			let responseString = JSON.stringify(responseJson);
+			if (savedStations == "" || responseString != savedStations){
+				this.setState({stations: responseJson});
+				this.state.stations.sort(this.sortStations);	
+				this.updateStations(this.state.searchText);
+				await AsyncStorage.setItem('stations', responseString);
+			}
+		}catch(error){
+			this.setState({stations: [{stationName: error.toString(), stationShortCode: "MOI", stationUICCode: 100000}]});
+			this.updateStations("");
+		}	
 	}
 	componentDidMount(){
 		this.updateStations("");
 		this.getStations();
-		this.state.stations.sort(this.sortStations);
-		this.updateStations("");
 	}
 	updateStations(filter){
 		//let stationArray =  <Text>Moro</Text>; 
 		//this.setState({count: this.state.count+1});
-		let array = this.state.stations.map((station) =>
-	  {
-		  global.stationShorts[station.stationShortCode] = station.stationName;
-		  this.setState({count: this.state.count+1});
-		  if(station.stationName.toLowerCase().indexOf(filter.toLowerCase()) !== -1 || station.stationShortCode.toLowerCase().indexOf(filter.toLowerCase()) !== -1){
-			  if (station.statioName == "Ladataan asemia...."){
-				  return(
-				<Text style={styles.listItem}>{station.stationName}</Text>
-			);
-			  }else{
-			return(
-			<TouchableOpacity onPress={() => this.stationPressed(station)} >
-				<Text style={styles.listItem}>{station.stationName}</Text>
-			</TouchableOpacity>
-			);
-			  }
-			}
+		/*
+		let array = this.state.stations.map((station, i) =>
+			{	
+				if (global.stationShorts[station.stationShortCode] == undefined){
+					global.stationShorts[station.stationShortCode] = station.stationName;
+				}
+				this.setState({count: this.state.count+1});
+				if(station.stationName.toLowerCase().indexOf(filter.toLowerCase()) !== -1 || station.stationShortCode.toLowerCase().indexOf(filter.toLowerCase()) !== -1){
+					if (station.statioName == "Ladataan asemia..."){
+						return(
+							<Text style={styles.listItem} key = {station.stationName}>{station.stationName}</Text>
+						);
+					}else{
+						return(
+							<TouchableOpacity key = {station.stationName} onPress={() => this.stationPressed(station)} >
+								<Text key = {"t" + station.stationName} style={styles.listItem}>{station.stationName}</Text>
+							</TouchableOpacity>
+						);
+					}
+				}
+				
 			//<Station name = station.stationName />
 		
 	  });
+	  */
+	  var array = [];
+		for(var key in this.state.stations){
+			if (global.stationShorts[this.state.stations[key].stationShortCode] == undefined){
+					global.stationShorts[this.state.stations[key].stationShortCode] = this.state.stations[key].stationName;
+				}
+			if(this.state.stations[key].stationName.toLowerCase().indexOf(filter.toLowerCase()) !== -1 || this.state.stations[key].stationShortCode.toLowerCase().indexOf(filter.toLowerCase()) !== -1){
+				array.push(this.state.stations[key]);
+			}
+		}
 	  this.setState({stationArray: array});
 	}
 	searchChanged(txt){
@@ -65,11 +94,19 @@ export default class StationsScreen extends React.Component {
 	}
 	
 	sortStations(a,b){
-		if(a.stationName.toLowerCase().indexOf(this.state.searchText) < b.stationName.toLowerCase().indexOf(this.state.searchText))
-			return -1;
-		if(a.stationName.toLowerCase().indexOf(this.state.searchText) > b.stationName.toLowerCase().indexOf(this.state.searchText))
-			return 1;
-		return 0;
+		if (this.state.searchText != ""){
+			if(a.stationName.toLowerCase().indexOf(this.state.searchText) < b.stationName.toLowerCase().indexOf(this.state.searchText))
+				return -1;
+			if(a.stationName.toLowerCase().indexOf(this.state.searchText) > b.stationName.toLowerCase().indexOf(this.state.searchText))
+				return 1;
+			return 0;
+		}else{
+			if(a.stationName < b.stationName)
+				return -1;
+			if(a.stationName > b.stationName)
+				return 1;
+			return 0;
+		}
 		/*
 		if(a.stationUICCode < b.stationUICCode)
 			return -1;
@@ -79,15 +116,22 @@ export default class StationsScreen extends React.Component {
 		*/
 	}
 	
-  render() {
-	  const {navigate} = this.props.navigation;
-    return (
-      <View style={styles.container}>
-  <TextInput placeholder="Etsi asemia" style={{height: 40}} onChangeText={(text) => this.searchChanged({text})} autoFocus = {true}></TextInput>
-		<ScrollView style={styles.scrollView}>
-			{this.state.stationArray}
-		</ScrollView>
-      </View>
-    );
-  }
+	render() {
+		const {navigate} = this.props.navigation;
+		return (
+			<View key = "view" style={styles.container}>
+				<TextInput key = "tIp" placeholder="Etsi asemia" style={{height: 40}} onChangeText={(text) => this.searchChanged({text})} autoFocus = {true}></TextInput>
+				<FlatList
+					key = "fL"
+					data={this.state.stationArray}
+					keyExtractor={item => item.stationName}
+					renderItem={({item}) => (
+						<TouchableOpacity onPress={() => this.stationPressed(item)} >
+							<Text style={styles.listItem}>{item.stationName}</Text>
+						</TouchableOpacity>
+					)}
+				/>
+			</View>
+		);
+	}
 }

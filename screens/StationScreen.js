@@ -30,28 +30,34 @@ export default class StationScreen extends React.Component {
 		}
 		trains.sort(this.sortTrainsByDate)
 		var dateFormat = require('dateformat');
-		var array = trains.map((train) =>
+		var count = 0;
+		var array = trains.map((train, i) =>
 			{
 				if (train.type === "DEPARTURE"){
 					return(
-							<TouchableOpacity style={styles.train} onPress={() => this.trainPressed(train)} >
-								<Text style={styles.listItem}>Menossa: {global.stationShorts[train.going]}</Text>
-								<Text style={styles.listItem}>{train.time.getDate()}.{(train.time.getMonth()+1).toString()}.{train.time.getFullYear()} {train.time.getHours()}:{train.time.getMinutes()<10?'0':''}{train.time.getMinutes()}:{train.time.getSeconds()<10?'0':''}{train.time.getSeconds()}</Text>
+							<TouchableOpacity className ="departure" key = {train.trainNumber + train.time.toString()} style={styles.train} >
+								<Text key = {train.trainNumber + train.time.toString()+"t"} style={styles.listItem}>Menossa: {global.stationShorts[train.going]}</Text>
+								<Text key = {train.trainNumber + train.time.toString()+"l"} style={styles.listItem}>Lähtee {train.time.getDate()}.{(train.time.getMonth()+1).toString()}.{train.time.getFullYear()} {train.time.getHours()}:{train.time.getMinutes()<10?'0':''}{train.time.getMinutes()}:{train.time.getSeconds()<10?'0':''}{train.time.getSeconds()}</Text>
 							</TouchableOpacity>
 					);
+					count += 1;
 				}
-		
 			});
+		if (array.length == 0){
+			array = <Text key = {"eilahe"} style={styles.listItem}>Ei lähteviä junia.</Text>;
+			count += 1;
+		}
 	  this.setState({departure: array});
-	  array = trains.map((train) =>
+	  array = trains.map((train, i) =>
 			{
 				if (train.type === "ARRIVAL"){
 					return(
-							<TouchableOpacity style={styles.train} onPress={() => this.trainPressed(train)} >
-								<Text style={styles.listItem}>Tulossa: {global.stationShorts[train.coming]}</Text>
-								<Text style={styles.listItem}>{train.time.getDate()}.{(train.time.getMonth()+1).toString()}.{train.time.getFullYear()} {train.time.getHours()}:{train.time.getMinutes()<10?'0':''}{train.time.getMinutes()}:{train.time.getSeconds()<10?'0':''}{train.time.getSeconds()}</Text>
+							<TouchableOpacity key = {train.trainNumber + train.time.toString()} className ="departure" style={styles.train} >
+								<Text key = {train.trainNumber + train.time.toString()+"t"} style={styles.listItem}>Tulossa: {global.stationShorts[train.coming]}</Text>
+								<Text key = {train.trainNumber + train.time.toString()+"l"} style={styles.listItem}>Saapuu {train.time.getDate()}.{(train.time.getMonth()+1).toString()}.{train.time.getFullYear()} {train.time.getHours()}:{train.time.getMinutes()<10?'0':''}{train.time.getMinutes()}:{train.time.getSeconds()<10?'0':''}{train.time.getSeconds()}</Text>
 							</TouchableOpacity>
 						);
+					count += 1;
 				}
 					/*if (train.stationShortCode === this.state.station.stationShortCode){
 						return(
@@ -63,11 +69,14 @@ export default class StationScreen extends React.Component {
 			//<Station name = station.stationName />
 		
 			});
+		if (array.length == 0){
+			array = <Text key = {count} style={styles.listItem}>Ei saapuvia	 junia.</Text>;
+			count += 1;
+		}
 	  this.setState({arrival: array});
 	}
 	componentDidMount(){
 		this.getTrains();
-		this.updateTrains();
 	}
 	stationPressed(station){
 	}
@@ -87,7 +96,7 @@ export default class StationScreen extends React.Component {
 	}
 	async getTrains(){
 		try{
-			let response = await fetch("https://rata.digitraffic.fi/api/v1/live-trains/station/" + this.state.station.stationShortCode + "?arrived_trains=5&arriving_trains=5&departed_trains=5&departing_trains=5&include_nonstopping=false");
+			let response = await fetch("https://rata.digitraffic.fi/api/v1/live-trains/station/" + this.state.station.stationShortCode + "?arrived_trains=0&arriving_trains=10&departed_trains=0&departing_trains=10&include_nonstopping=false");
 			let responseJson = await response.json();
 			this.setState({trains: responseJson});
 			this.updateTrains();
@@ -99,11 +108,11 @@ export default class StationScreen extends React.Component {
 	  const {navigate} = this.props.navigation;
     return (
       <View style={styles.container}>
-	  <Text style={styles.listItem}>{this.state.station.stationName} ({this.state.station.stationShortCode})</Text>
+	  <Text style={styles.stationName}>{this.state.station.stationName} ({this.state.station.stationShortCode})</Text>
 		<ScrollView style={styles.scrollView}>
-			<Text style={styles.listItem}>Lähtevät junat</Text>
+			<Text style={styles.listHeader}>Lähtevät junat</Text>
 			{this.state.departure}
-			 <Text style={styles.listItem}>Saapuvat junat</Text>
+			 <Text style={styles.listHeader}>Saapuvat junat</Text>
 			{this.state.arrival}
 		</ScrollView>
       </View>
