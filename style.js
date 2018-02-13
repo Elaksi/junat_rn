@@ -30,6 +30,9 @@ export default StyleSheet.create({
   train: {
 	paddingBottom: 5,
   },
+  searchBar: {
+	height: 40,
+  },
   stationButton: {
     flex: 1,
 	height: 30,
