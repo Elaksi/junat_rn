@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 export default StyleSheet.create({
   container: {
@@ -40,4 +40,7 @@ export default StyleSheet.create({
 	paddingBottom: 5,
 	color: '#fff',
   },
+  stationList: {
+	  marginTop: 10,
+  }
 });
