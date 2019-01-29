@@ -40,32 +40,27 @@ export default class ScheduleView extends React.Component{
 	}
 	
 	render(){
-		if (this.estimated instanceof Date && !dateHelper.hasPassed(this.estimated)){
-			if (this.scheduled.getTime() == this.estimated.getTime()){
-				return (<View>
-				<Text key = {this.props.type + 'Header'}
-					style={styles.listHeader}>{this.happens}</Text>
-				<Text key = {this.props.type}
-					style={styles.listItem}>{dateHelper.formatDate(this.scheduled)}</Text>
-				<Text key = {this.props.type + 'InHeader'}
-					style={styles.listHeader}>{this.happensIn}</Text>
-				<Text key = {this.props.type + "In"}
-					style={styles.listItem}>{this.state.timeUntil}</Text>
-				</View>);
-			}else{
-				return (<View>
-				<Text key = {this.props.type + 'Header'}
-					style={styles.listHeader}>{this.happens}</Text>
-				<Text key = {this.props.type}
-					style={styles.listItem}>{dateHelper.formatDate(this.scheduled)} -> {dateHelper.formatTime(this.estimated)}</Text>
-				<Text key = {this.props.type + 'InHeader'}
-					style={styles.listHeader}>{this.happensIn}</Text>
-				<Text key = {this.props.type + "In"}
-					style={styles.listItem}>{this.state.timeUntil}</Text>
-				</View>);
-			}
-		}else{
+		if (!(this.estimated instanceof Date) || dateHelper.hasPassed(this.estimated)){
 			return null;
 		}
+		
+		let timeText;
+		if (this.scheduled.getTime() == this.estimated.getTime()){
+			timeText = (<Text key = {this.props.type}
+					style={styles.listItem}>{dateHelper.formatDate(this.scheduled)}</Text>);
+		}else{
+			timeText = (<Text key = {this.props.type}
+					style={styles.listItem}>{dateHelper.formatDate(this.scheduled)} -> {dateHelper.formatTime(this.estimated)}</Text>);
+		}
+		
+		return (<View>
+		<Text key = {this.props.type + 'Header'}
+			style={styles.listHeader}>{this.happens}</Text>
+		{timeText}
+		<Text key = {this.props.type + 'InHeader'}
+			style={styles.listHeader}>{this.happensIn}</Text>
+		<Text key = {this.props.type + "In"}
+			style={styles.listItem}>{this.state.timeUntil}</Text>
+			</View>);
 	}
 }
